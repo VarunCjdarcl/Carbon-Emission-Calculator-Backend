@@ -94,6 +94,31 @@ const emissionFactors = {
   TANKER: {
     Tanker: { WTT: 0.012, TTW: 0.058, WTW: 0.07 },
   },
+
+  DUMP: {
+
+    // Diesel
+    "LDT 3.5-4.5 t GVW": { WTT: 0.13016, TTW: 0.42846, WTW: 0.55862 },
+    "MDT 4.5-5.5 t GVW": { WTT: 0.09673, TTW: 0.31843, WTW: 0.41516 },
+    "MDV 5.5-7.0 t GVW": { WTT: 0.09162, TTW: 0.3016, WTW: 0.39322 },
+    "MDV 7.0-8.5 t GVW": { WTT: 0.07107, TTW: 0.23396, WTW: 0.30503 },
+    "MDV 8.5-10.5 t GVW": { WTT: 0.06112, TTW: 0.20119, WTW: 0.26231 },
+    "MDV 10.5-12.5 t GVW": { WTT: 0.05239, TTW: 0.17248, WTW: 0.22487 },
+    "MDV 12.5-16.0 t GVW": { WTT: 0.04804, TTW: 0.15814, WTW: 0.20618 },
+    "HDV 16.0-20.0 t GVW": { WTT: 0.0356, TTW: 0.11721, WTW: 0.15281 },
+    "HDV 20.0-25.0 t GVW": { WTT: 0.02328, TTW: 0.07663, WTW: 0.09991 },
+    "HDV 25.0-31.0 t GVW": { WTT: 0.02147, TTW: 0.07006, WTW: 0.09153 },
+    "HDV 31.0+ t GVW": { WTT: 0.01862, TTW: 0.0613, WTW: 0.07992 },
+
+
+    // LNG
+    "MDV 14-24 t GVW": { WTT: 0.05789, TTW: 0.13572, WTW: 0.19361 },
+    "HDV 24-25 t GVW": { WTT: 0.02863, TTW: 0.06712, WTW: 0.09575 },
+    "HDV 25-29 t GVW": { WTT: 0.02414, TTW: 0.05659, WTW: 0.08073 },
+    "HDV 29-31 t GVW": { WTT: 0.02049, TTW: 0.04804, WTW: 0.06853 },
+    "HDV 31-60 t GVW": { WTT: 0.01652, TTW: 0.03874, WTW: 0.05526 },
+  }
+
 };
 
 // --------------------- HELPER FUNCTIONS ---------------------
@@ -259,6 +284,29 @@ function getWeightCategory(category1, weight, fuelType) {
   if (category === "TANKER") {
     return "Tanker";
   }
+
+  if(category === "DUMP" && fuelType.toLowerCase() === "diesel") {
+    if (weight >= 3.5 && weight <= 4.5) return "LDT 3.5-4.5 t GVW";
+    if (weight > 4.5 && weight <= 5.5) return "LDT 4.5-5.5 t GVW";
+    if (weight > 5.5 && weight <= 7.0) return "MDV 5.5-7.0 t GVW";
+    if (weight > 7.0 && weight <= 8.5) return "MDV 7.0-8.5 t GVW";
+    if (weight > 8.5 && weight <= 10.5) return "MDV 8.5-10.5 t GVW";
+    if (weight > 10.5 && weight <= 12.5) return "MDV 10.5-12.5 t GVW";
+    if (weight > 12.5 && weight <= 16.0) return "MDV 12.5-16.0 t GVW";
+    if (weight > 16 && weight <= 20) return "HDV 16.0-20.0 t GVW";
+    if (weight > 20 && weight <= 25) return "HD 20.0-25.0 t GVW";
+    if (weight > 25 && weight <= 31) return "HDV 25.0-31.0 t GVW";
+    if (weight > 31) return "HDV 31.0+ t GVW";
+  }
+
+  if(category === "DUMP" && fuelType.toLowerCase() === "lng") {
+    if (weight >= 14 && weight <= 24) return "MDV 14-24 t GVW";
+    if (weight > 24 && weight <= 25) return "HDV 24-25 t GVW";
+    if (weight > 25 && weight <= 29) return "HDV 25-29 t GVW";
+    if (weight > 29 && weight <= 31) return "HDV 29-31 t GVW";
+    if (weight > 31 && weight <= 60) return "HDV 31-60 t GVW";
+  }
+
   return null;
 }
 
@@ -1149,67 +1197,71 @@ async function truckTypes(req, res) {
   try {
     // Road Truck Types
     const truckTypes = [
-      "Truck - Rigid (LDT (<3.5 t))",
-      "Truck - Rigid (LDT 3.5-4.5 t GVW)",
-      "Truck - Rigid (MDT 4.5-5.5 t GVW)",
-      "Truck - Rigid (MDV 5.5-7.0 t GVW)",
-      "Truck - Rigid (MDV 7.0-8.5 t GVW)",
-      "Truck - Rigid (MDV 8.5-10.5 t GVW)",
-      "Truck - Rigid (MDV 10.5-12.5 t GVW)",
-      "Truck - Rigid (HDV 12.5-16.0 t GVW)",
-      "Truck - Rigid (HDV 16.0-20.0 t GVW)",
-      "Truck - Rigid (HDV 20.0-25.0 t GVW)",
-      "Truck - Rigid (HDV 25.0-31.0 t GVW)",
-      "Truck - Rigid (HDV >31.0 t GVW)",
-      "Truck - Articulated (HDV up to 18.0 t GVW)",
-      "Truck - Articulated (HDV 18.0-27.0 t GVW)",
-      "Truck - Articulated (HDV 27.0-35.0 t GVW)",
-      "Truck - Articulated (HDV 35.0-40.0 t GVW)",
-      "Truck - Articulated (HDV 40.0-43.0 t GVW)",
-      "Truck - Articulated (HDV 43.0-46.0 t GVW)",
-      "Truck - Articulated (HDV 46.0-49.0 t GVW)",
-      "Truck - Articulated (HDV >49.0 t GVW)",
-      "Truck - Dump (LDT 3.5-4.5 t GVW)",
-      "Truck - Dump (MDT 4.5-5.5 t GVW)",
-      "Truck - Dump (MDV 5.5-7.0 t GVW)",
-      "Truck - Dump (MDV 7.0-8.5 t GVW)",
-      "Truck - Dump (MDV 8.5-10.5 t GVW)",
-      "Truck - Dump (MDV 10.5-12.5 t GVW)",
-      "Truck - Dump (MDV 12.5-16.0 t GVW)",
-      "Truck - Dump (HDV 16.0-20.0 t GVW)",
-      "Truck - Dump (HDV 20.0-25.0 t GVW)",
-      "Truck - Dump (HDV 25.0-31.0 t GVW)",
-      "Truck - Dump (HDV 31.0+ t GVW)",
-      "Truck - Articulated (14-24 t GVW)",
-      "Truck - Articulated (24-25.1 t GVW)",
-      "Truck - Articulated (25-29 t GVW)",
-      "Truck - Articulated (HDV 29-31 t GVW)",
-      "Truck - Articulated (HDV 31-60 t GVW)",
-      "Truck - Dump (MDV 14-24 t GVW)",
-      "Truck - Dump (HDV 24-25 t GVW)",
-      "Truck - Dump (HDV 25-29 t GVW)",
-      "Truck - Dump (HDV 29-31 t GVW)",
-      "Truck - Dump (HDV 31-60 t GVW)",
-      "Truck - Rigid (MDV 14-24 t GVW)",
-      "Truck - Rigid (HDV 24-25 t GVW)",
-      "Truck - Rigid (HDV 25-29 t GVW)",
-      "Truck - Rigid (HDV 29-31 t GVW)",
-      "Truck - Rigid (HDV 31-60 t GVW)",
-      "Truck - Rigid (LDV up to 4.5 t GVW)",
-      "Truck - Rigid (MDV up to 4.5-12t GVW)",
-      "Truck - Rigid (LDV above 12t GVW)",
-      "Truck - Rigid (Average <3.5 t -4.5t)",
-      "Truck - Rigid (LDV up to 4.5 t GVW)",
-      "Truck - Rigid (MDV up to 4.5-12t GVW)",
-      "Truck - Rigid (HDV above 12t GVW)",
-      "Truck - Rigid (<3.5 t GVW)",
-      "Truck - Rigid (3.5-7.5 t GVW)",
-      "Truck - Rigid (7.5-12 t GVW)",
-      "Truck - Rigid (12-17 t GVW)",
-      "Truck - Rigid (17-25 t GVW)",
-      "Truck - Rigid (25-32 t GVW)",
-      "Truck - Rigid (>32 t GVW)",
-      "Truck - Articulated (25-32> t GVW)",
+      { fullType: "Truck - Rigid (LDT (<3.5 t))", vehicleType: "Rigid", avgWeight: "1.75" },
+      { fullType: "Truck - Rigid (LDT 3.5-4.5 t GVW)", vehicleType: "Rigid",  avgWeight: "4.0" },
+      { fullType: "Truck - Rigid (MDT 4.5-5.5 t GVW)", vehicleType: "Rigid",  avgWeight: "5.0" },
+      { fullType: "Truck - Rigid (MDV 5.5-7.0 t GVW)", vehicleType: "Rigid",  avgWeight: "6.25" },
+      { fullType: "Truck - Rigid (MDV 7.0-8.5 t GVW)", vehicleType: "Rigid", avgWeight: "7.75" },
+      { fullType: "Truck - Rigid (MDV 8.5-10.5 t GVW)", vehicleType: "Rigid",  avgWeight: "9.5" },
+      { fullType: "Truck - Rigid (MDV 10.5-12.5 t GVW)", vehicleType: "Rigid",  avgWeight: "11.5" },
+      { fullType: "Truck - Rigid (HDV 12.5-16.0 t GVW)", vehicleType: "Rigid",  avgWeight: "14.25" },
+      { fullType: "Truck - Rigid (HDV 16.0-20.0 t GVW)", vehicleType: "Rigid",  avgWeight: "18.0" },
+      { fullType: "Truck - Rigid (HDV 20.0-25.0 t GVW)", vehicleType: "Rigid",  avgWeight: "22.5" },
+      { fullType: "Truck - Rigid (HDV 25.0-31.0 t GVW)", vehicleType: "Rigid", avgWeight: "28.0" },
+      { fullType: "Truck - Rigid (HDV >31.0 t GVW)", vehicleType: "Rigid",  avgWeight: "32.0" },
+      { fullType: "Truck - Articulated (HDV up to 18.0 t GVW)", vehicleType: "Articulated", avgWeight: "18.0" },
+      { fullType: "Truck - Articulated (HDV 18.0-27.0 t GVW)", vehicleType: "Articulated", avgWeight: "22.5" },
+      { fullType: "Truck - Articulated (HDV 27.0-35.0 t GVW)", vehicleType: "Articulated", avgWeight: "31.0" },
+      { fullType: "Truck - Articulated (HDV 35.0-40.0 t GVW)", vehicleType: "Articulated", avgWeight: "37.5" },
+      { fullType: "Truck - Articulated (HDV 40.0-43.0 t GVW)", vehicleType: "Articulated", avgWeight: "41.5" },
+      { fullType: "Truck - Articulated (HDV 43.0-46.0 t GVW)", vehicleType: "Articulated", avgWeight: "44.5" },
+      { fullType: "Truck - Articulated (HDV 46.0-49.0 t GVW)", vehicleType: "Articulated", avgWeight: "47.5" },
+      { fullType: "Truck - Articulated (HDV >49.0 t GVW)", vehicleType: "Articulated", avgWeight: "50.0" },
+      { fullType: "Truck - Dump (LDT 3.5-4.5 t GVW)", vehicleType: "Dump", avgWeight: "4.0" },
+      { fullType: "Truck - Dump (MDT 4.5-5.5 t GVW)", vehicleType: "Dump", avgWeight: "5.0" },
+      { fullType: "Truck - Dump (MDV 5.5-7.0 t GVW)", vehicleType: "Dump", avgWeight: "6.25" },
+      { fullType: "Truck - Dump (MDV 7.0-8.5 t GVW)", vehicleType: "Dump", avgWeight: "7.75" },
+      { fullType: "Truck - Dump (MDV 8.5-10.5 t GVW)", vehicleType: "Dump", avgWeight: "9.5" },
+      { fullType: "Truck - Dump (MDV 10.5-12.5 t GVW)", vehicleType: "Dump", avgWeight: "11.5" },
+      { fullType: "Truck - Dump (MDV 12.5-16.0 t GVW)", vehicleType: "Dump", avgWeight: "14.25" },
+      { fullType: "Truck - Dump (HDV 16.0-20.0 t GVW)", vehicleType: "Dump", avgWeight: "18.0" },
+      { fullType: "Truck - Dump (HDV 20.0-25.0 t GVW)", vehicleType: "Dump", avgWeight: "22.5" },
+      { fullType: "Truck - Dump (HDV 25.0-31.0 t GVW)", vehicleType: "Dump", avgWeight: "28.0" },
+      { fullType: "Truck - Dump (HDV 31.0+ t GVW)", vehicleType: "Dump", avgWeight: "32.0" },
+      { fullType: "Truck - Articulated (14-24 t GVW)", vehicleType: "Articulated", avgWeight: "19.0" },
+      { fullType: "Truck - Articulated (24-25 t GVW)", vehicleType: "Articulated", avgWeight: "24.5" },
+      { fullType: "Truck - Articulated (25-29 t GVW)", vehicleType: "Articulated", avgWeight: "27.5" },
+      { fullType: "Truck - Articulated (HDV 29-31 t GVW)", vehicleType: "Articulated", avgWeight: "30.5" },
+      { fullType: "Truck - Articulated (HDV 31-60 t GVW)", vehicleType: "Articulated", avgWeight: "46.0" },
+
+      { fullType: "Truck - Dump (MDV 14-24 t GVW)", vehicleType: "Dump", avgWeight: "19.0" },
+      { fullType: "Truck - Dump (HDV 24-25 t GVW)", vehicleType: "Dump", avgWeight: "24.5" },
+      { fullType: "Truck - Dump (HDV 25-29 t GVW)", vehicleType: "Dump", avgWeight: "27.5" },
+      { fullType: "Truck - Dump (HDV 29-31 t GVW)", vehicleType: "Dump", avgWeight: "30.5" },
+
+      { fullType: "Truck - Dump (HDV 31-60 t GVW)", vehicleType: "Dump", avgWeight: "46.0" },
+      { fullType: "Truck - Rigid (MDV 14-24 t GVW)", vehicleType: "Rigid", avgWeight: "19.5" },
+      { fullType: "Truck - Rigid (HDV 24-25 t GVW)", vehicleType: "Rigid",  avgWeight: "24.5" },
+      { fullType: "Truck - Rigid (HDV 25-29 t GVW)", vehicleType: "Rigid",  avgWeight: "27.5" },
+      { fullType: "Truck - Rigid (HDV 29-31 t GVW)", vehicleType: "Rigid",  avgWeight: "30.5" },
+      { fullType: "Truck - Rigid (HDV 31-60 t GVW)", vehicleType: "Rigid",  avgWeight: "46.0" },
+
+      { fullType: "Truck - Rigid (LDV up to 4.5 t GVW)", vehicleType: "Rigid", avgWeight: "3.0" },
+      { fullType: "Truck - Rigid (MDV up to 4.5-12 t GVW)", vehicleType: "Rigid", avgWeight: "8.25" },
+      { fullType: "Truck - Rigid (LDV above 12 t GVW)", vehicleType: "Rigid",  avgWeight: "24.5" },
+      { fullType: "Truck - Rigid (Average < 3.5 t - 4.5 t)", vehicleType: "Rigid", avgWeight: "4.0" },
+
+      { fullType: "Truck - Rigid (LDV up to 4.5 t GVW)", vehicleType: "Rigid", avgWeight: "2.25" },
+      { fullType: "Truck - Rigid (MDV up to 4.5-12 t GVW)", vehicleType: "Rigid", avgWeight: "8.25" },
+      { fullType: "Truck - Rigid (HDV above 12 t GVW)", vehicleType: "Rigid", avgWeight: "14" },
+      { fullType: "Truck - Rigid (<3.5 t GVW)", vehicleType: "Rigid", avgWeight: "3.0" },
+      { fullType: "Truck - Rigid (3.5-7.5 t GVW)", vehicleType: "Rigid", avgWeight: "5.5" },
+      { fullType: "Truck - Rigid (7.5-12 t GVW)", vehicleType: "Rigid", avgWeight: "9.5" },
+      { fullType: "Truck - Rigid (12-17 t GVW)", vehicleType: "Rigid", avgWeight: "14.5" },
+      { fullType: "Truck - Rigid (17-25 t GVW)", vehicleType: "Rigid", avgWeight: "21.0" },
+      { fullType: "Truck - Rigid (25-32 t GVW)", vehicleType: "Rigid", avgWeight: "28.5" },
+      { fullType: "Truck - Rigid (>32 t GVW)", vehicleType: "Rigid", avgWeight: "33.0" },
+      { fullType: "Truck - Articulated (25-32> t GVW)", vehicleType: "Articulated", avgWeight: "28.5" },
     ];
     return res.send({status: 200, truckTypes});
   } catch (error) {
