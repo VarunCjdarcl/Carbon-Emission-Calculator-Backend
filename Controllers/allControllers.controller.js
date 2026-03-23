@@ -2,6 +2,57 @@ const rp = require("request-promise");
 let moment = require("moment");
 
 const ulipCache = new Map();
+
+// --------------------- IP RATE LIMITING ---------------------
+const MAX_CALCULATIONS_PER_DAY = 10;
+const ipCalculationTracker = new Map(); // IP -> { count, resetTime }
+
+function getClientIp(req) {
+  return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.connection?.remoteAddress || req.ip;
+}
+
+function getIpLimitInfo(ip) {
+  const now = Date.now();
+  const record = ipCalculationTracker.get(ip);
+
+  if (!record || now >= record.resetTime) {
+    return { count: 0, remaining: MAX_CALCULATIONS_PER_DAY, limitReached: false };
+  }
+
+  const remaining = Math.max(0, MAX_CALCULATIONS_PER_DAY - record.count);
+  return { count: record.count, remaining, limitReached: remaining <= 0 };
+}
+
+function incrementIpCount(ip) {
+  const now = Date.now();
+  const record = ipCalculationTracker.get(ip);
+
+  if (!record || now >= record.resetTime) {
+    // Set reset time to midnight of next day
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    ipCalculationTracker.set(ip, { count: 1, resetTime: tomorrow.getTime() });
+  } else {
+    record.count += 1;
+    ipCalculationTracker.set(ip, record);
+  }
+}
+
+async function checkLimit(req, res) {
+  try {
+    const ip = getClientIp(req);
+    const info = getIpLimitInfo(ip);
+    return res.send({
+      status: 200,
+      remaining: info.remaining,
+      limitReached: info.limitReached,
+      maxCalculations: MAX_CALCULATIONS_PER_DAY
+    });
+  } catch (error) {
+    return res.send({ status: 400, message: "Error checking limit" });
+  }
+}
 // --------------------- EMISSION FACTORS ---------------------
 const emissionFactors = {
   RIGID: {
@@ -1052,9 +1103,21 @@ async function analyzeNumber(num) {
 
 async function calculateTKM(req, res) {
   try {
+    const ip = getClientIp(req);
+    const limitInfo = getIpLimitInfo(ip);
+
+    if (limitInfo.limitReached) {
+      return res.send({
+        status: 429,
+        message: "You have reached the maximum limit of 5 calculations for today. Please try again tomorrow.",
+        remaining: 0,
+        limitReached: true
+      });
+    }
+
     let { weight, distance, mode } = req?.body;
     if (!weight || !distance || !mode) {
-      res.send({
+      return res.send({
         status: 403,
         message: "Please provide Weight, Distance and Mode",
       });
@@ -1070,13 +1133,15 @@ async function calculateTKM(req, res) {
     }
 
     const tkm = (distance * weight).toFixed(3);
+    incrementIpCount(ip);
+    const updatedLimit = getIpLimitInfo(ip);
     const shipmentDetails = {
       weight,
       distance,
       mode,
       tkm,
     };
-    return res.send({ status: 200, shipmentDetails });
+    return res.send({ status: 200, shipmentDetails, remaining: updatedLimit.remaining, limitReached: updatedLimit.limitReached });
   } catch (error) {
     console.error(req, res);
     return res.send({
@@ -1277,5 +1342,6 @@ async function truckTypes(req, res) {
 module.exports = {
   calculateTKM,
   calculateCarbonEmission,
-  truckTypes
+  truckTypes,
+  checkLimit
 };

@@ -5,11 +5,13 @@ const router = express.Router();
 const {
   calculateTKM,
   calculateCarbonEmission,
-  truckTypes
+  truckTypes,
+  checkLimit
 } = require("../Controllers/allControllers.controller.js");
 
 router.route('/calculateTKM').post(calculateTKM);
 router.route('/truckTypes').post(truckTypes);
 router.route("/calculateCarbonEmission").post(calculateCarbonEmission);
+router.route("/checkLimit").get(checkLimit);
 
 module.exports = router;
