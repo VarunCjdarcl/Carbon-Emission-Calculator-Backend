@@ -1188,7 +1188,7 @@ async function calculateCarbonEmission(req, res) {
       return res.send({status: 200, responseData});
     } else {
       const category = mapVehicleCategory(vehicleType);
-       let weightCat = getWeightCategory(category, weight, fuelType);
+        let weightCat = getWeightCategory(category, weight, fuelType);
       const factor = emissionFactors[category]?.[weightCat];
 
       if ((factor && Object.keys(factor).length === 0) || !factor) {
